@@ -12,6 +12,12 @@
      */
 
     /**
+    * @typedef {Object} EventAndCallback
+    * @property {string} event
+    * @property {()} callback
+    */
+
+    /**
     * Performs a HTTP request. Returns a Promise filled with HttpResponse object
     * @param {string} url URL for HTTP request
     * @param {string} method The HTTP request method
@@ -34,8 +40,8 @@
     /**
      * Gets a JSON info from server. Returns a Promise filled with a string, is the string value is empty 
      * something went wrong with the request
-     *@param {string} path Server path for get the JSON
-     *@returns {Promise<string>} 
+     * @param {string} path Server path for get the JSON
+     * @returns {Promise<string>} 
      */
     const getJSON = async (path) => {
         const host = "https://server-for-esp-default-rtdb.firebaseio.com"
@@ -90,6 +96,28 @@
     const setAuthState = (authState) => isAuthState(authState) ?
         sessionStorage.setItem("auth", JSON.stringify(authState)) :
         sessionStorage.setItem("auth", "")
-    
+
+    /**
+     * Allow perform safe recursion
+     * @param {()} fn 
+     * @returns 
+     */
+    const trampoline = (fn) => (...args) => {
+        let result = fn(...args)
+        while (typeof result === "function") result = result()
+        return result;
+    }
+
+    /**
+     * Allow perform safe recursion with async functions
+     * @param {()} fn 
+     * @returns 
+     */
+    const asyncTrampoline = (fn) => async (...args) => {
+        let result = await fn(...args)
+        while (typeof result === "function") result = await result()
+        return result;
+    }
+
 
 })()
