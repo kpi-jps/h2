@@ -6,6 +6,12 @@
     */
 
     /**
+     * @typedef {Object} AuthState
+     * @property {string} token
+     * @property {number} authTime
+     */
+
+    /**
     * Performs a HTTP request. Returns a Promise filled with HttpResponse object
     * @param {string} url URL for HTTP request
     * @param {string} method The HTTP request method
@@ -60,5 +66,30 @@
         const response = await doHttpsRequest(host + path, "PUT", txt, false)
         return Promise.resolve(response.code === 200)
     }
+
+    /**
+     * 
+     * @returns {AuthState}
+     */
+    const getAuthState = () => (sessionStorage.getItem("auth")) ?
+        Object.freeze(JSON.parse(sessionStorage.getItem("auth"))) :
+        Object.freeze({ token: "", authTime: 0 })
+
+    /**
+     * 
+     * @param {AuthState} authState 
+     */
+    const isAuthState = (authState) => authState !== null && authState !== undefined &&
+        authState.authTime !== null && authState.authTime !== undefined &&
+        authState.token !== null && authState.token !== undefined
+
+    /**
+     * 
+     * @param {AuthState} authState 
+     */
+    const setAuthState = (authState) => isAuthState(authState) ?
+        sessionStorage.setItem("auth", JSON.stringify(authState)) :
+        sessionStorage.setItem("auth", "")
+    
 
 })()
