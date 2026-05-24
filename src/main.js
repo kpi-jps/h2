@@ -119,5 +119,12 @@
         return result;
     }
 
+    /**
+     * @param {EventAndCallback []} eventsAndCallbacks 
+     */
+    const attachEvents = (eventsAndCallbacks) => eventsAndCallbacks.forEach(
+        (item) => document.addEventListener(item.event, item.callback)
+    )
+
 
 })()
