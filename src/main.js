@@ -188,5 +188,28 @@
             document.body.innerHTML = document.body.innerHTML
     }
 
+    /**
+     * Created the login page
+     * @returns {string}
+     */
+    const buildLoginPage = () => `
+        <header><h1>H2</h1></header>
+        <form onsubmit="this.dispatchEvent(new CustomEvent('login', {bubbles: true, cancelable: true}))">
+            <div> 
+                <label>Login:
+                    <input type="text" name="login">
+                </label>
+            </div>
+            <div> 
+                <label>Password:
+                    <input type="password" name="password">
+                </label>
+            </div>
+            <div> 
+                <input type="submit" value="Authenticate">
+            </div>
+        </form>
+    `
+
 
 })()
