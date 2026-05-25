@@ -136,7 +136,7 @@
 
     /**
      * Allow perform safe recursion
-     * @param {()} fn 
+     * @param {()} fn A functions to be executed in recursion
      * @returns 
      */
     const trampoline = (fn) => (...args) => {
@@ -147,7 +147,7 @@
 
     /**
      * Allow perform safe recursion with async functions
-     * @param {()} fn 
+     * @param {()} fn A functions to be executed in recursion
      * @returns 
      */
     const asyncTrampoline = (fn) => async (...args) => {
@@ -158,11 +158,21 @@
 
     /**
      * Attaches events to html elements
-     * @param {EventAndCallback []} eventsAndCallbacks 
+     * @param {EventAndCallback []} eventsAndCallbacks An array of eventAndCallbacks objects
      */
     const attachEvents = (eventsAndCallbacks) => eventsAndCallbacks.forEach(
         (item) => document.addEventListener(item.event, item.callback)
     )
+
+    /**
+     * Renders the html ui
+     * @param {string} htmlAsString The html elements as string
+     */
+    const renderHTML = (htmlAsString) => {
+        (htmlAsString && typeof htmlAsString === "string") ?
+            document.body.innerHTML = `<div id="modal"></div> <main>${htmlAsString}</main>` :
+            document.body.innerHTML = document.body.innerHTML
+    }
 
 
 })()
