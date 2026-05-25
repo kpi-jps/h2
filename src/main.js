@@ -74,7 +74,7 @@
     }
 
     /**
-     * 
+     * Gets the authentication state from session storage
      * @returns {AuthState}
      */
     const getAuthState = () => (sessionStorage.getItem("auth")) ?
@@ -82,7 +82,7 @@
         Object.freeze({ token: "", authTime: 0 })
 
     /**
-     * 
+     * Checks if the parameter represents a auth state object
      * @param {AuthState} authState 
      */
     const isAuthState = (authState) => authState !== null && authState !== undefined &&
@@ -90,12 +90,49 @@
         authState.token !== null && authState.token !== undefined
 
     /**
-     * 
+     * Sets the authentication state in session storage
      * @param {AuthState} authState 
      */
     const setAuthState = (authState) => isAuthState(authState) ?
         sessionStorage.setItem("auth", JSON.stringify(authState)) :
         sessionStorage.setItem("auth", "")
+
+    /** Gets authentication token from from server. Returns a Promise filled with the auth token or with a empty string if 
+     * something went wrong
+     * @param {string} login Login for authentication
+     * @param {string} password Password for authentication
+     * @returns {Promise<string>}
+     */
+    const getAuthToken = async (login, password) => {
+        const url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCVryIMYxHjRp_8cswCZgh9W0SJxb6MGfg"
+        const userInfo = { "email": login, "password": password, "returnSecureToken": true }
+        const response = await doHttpsRequest(url, "POST", JSON.stringify(userInfo), true)
+        return response.code === 200 ? JSON.parse(response.body).idToken ? Promise.resolve(JSON.parse(response.body).idToken) : Promise.resolve("") : Promise.resolve("")
+    }
+
+    /**
+     * Checks if is authenticated
+     * @returns {boolean}
+     */
+    const isAutheticated = () => {
+        const authState = getAuthState()
+        return authState.token !== "" &&
+            authState.authTime !== "" &&
+            new Date().getTime() - authState.authTime < 3600 * 1000
+    }
+
+    /**
+     * Performs the authentication. 
+     * @param {string} login Login for authentication
+     * @param {string} password Password for authentication
+     * @returns {boolean}
+     */
+    const authenticate = async (login, password) => {
+        const token = await getAuthToken(login, password)
+        const authState = Object.freeze({ token: token, authTime: new Date().getTime() })
+        setAuthState(authState)
+        return isAutheticated()
+    }
 
     /**
      * Allow perform safe recursion
@@ -120,6 +157,7 @@
     }
 
     /**
+     * Attaches events to html elements
      * @param {EventAndCallback []} eventsAndCallbacks 
      */
     const attachEvents = (eventsAndCallbacks) => eventsAndCallbacks.forEach(
