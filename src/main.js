@@ -189,27 +189,50 @@
     }
 
     /**
-     * Created the login page
-     * @returns {string}
+     * Creates the login page
      */
-    const buildLoginPage = () => `
-        <header><h1>H2</h1></header>
-        <form onsubmit="this.dispatchEvent(new CustomEvent('login', {bubbles: true, cancelable: true}))">
-            <div> 
-                <label>Login:
-                    <input type="text" name="login">
-                </label>
-            </div>
-            <div> 
-                <label>Password:
-                    <input type="password" name="password">
-                </label>
-            </div>
-            <div> 
-                <input type="submit" value="Authenticate">
-            </div>
-        </form>
-    `
-
+    const loginPage = () => {
+        const html = `
+            <header><h1>H2</h1></header>
+            <form onsubmit="this.dispatchEvent(new CustomEvent('login', {bubbles: true, cancelable: true}))">
+                <div> 
+                    <label>Login:
+                        <input type="text" name="login">
+                    </label>
+                </div>
+                <div> 
+                    <label>Password:
+                        <input type="password" name="password">
+                    </label>
+                </div>
+                <div> 
+                    <input type="submit" value="Authenticate">
+                </div>
+            </form>
+         `
+        renderHTML(html)
+        attachEvents(
+            [
+                {
+                    event: "submit", callback: (e) =>
+                        e.preventDefault()
+                },
+                {
+                    event: "login", callback: async (e) => {
+                        e.preventDefault()
+                        const formData = new FormData(e.target)
+                        const login = formData.get("login")
+                        const password = formData.get("password")
+                        renderHTML(buildLoadingPage())
+                        await authenticate(login, password) ? selectDevicePage() :
+                            (() => {
+                                renderHTML(buildAuthenticationFailedPaige())
+                                setTimeout(loginPage, 2000)
+                            })()
+                    }
+                },
+            ]
+        )
+    }
 
 })()
