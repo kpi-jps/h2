@@ -184,7 +184,7 @@
      */
     const renderHTML = (htmlAsString) => {
         (htmlAsString && typeof htmlAsString === "string") ?
-            document.body.innerHTML = `<div id="modal"></div> <header><h1>H2</h1></header> <main>${htmlAsString}</main>` :
+            document.body.innerHTML = `<div id="modal"></div> <main> <header><h1>H2</h1></header> ${htmlAsString}</main>` :
             document.body.innerHTML = document.body.innerHTML
     }
 
@@ -272,10 +272,18 @@
     }
 
     const accessDataPage = () => {
-        
+
     }
 
-    const initialPage = () => {
+    /**
+     * Creates the initial page
+     */
+    const initialPage = async () => {
+        const path = `/.json?auth=${getAuthState().token}&shallow=true`
+        const devicesAsJson = await getJSON(path)
+        if (devicesAsJson === "") return somethingWentWrongPage()
+        const devices = JSON.parse(devicesAsJson)
+        const options = createOptions(Object.keys(devices))
         const html = `
             <form>
                 <div>
@@ -318,5 +326,15 @@
             ]
         )
     }
+
+    const init = () => {
+        if (!isAutheticated()) return loginPage()
+        const timer = 3600000 - (new Date().getTime() - getAuthState().authTime)
+        console.log(`timer = ${Math.floor(timer / 1000)} s`)
+        setTimeout(init, timer)
+        initialPage()
+    }
+
+    init()
 
 })()
