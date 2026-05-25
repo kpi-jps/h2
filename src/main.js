@@ -184,16 +184,48 @@
      */
     const renderHTML = (htmlAsString) => {
         (htmlAsString && typeof htmlAsString === "string") ?
-            document.body.innerHTML = `<div id="modal"></div> <main>${htmlAsString}</main>` :
+            document.body.innerHTML = `<div id="modal"></div> <header><h1>H2</h1></header> <main>${htmlAsString}</main>` :
             document.body.innerHTML = document.body.innerHTML
     }
+
+    /**
+     * Creates the options elements as string
+     * @param {Array} array The array of options to build options elements
+     * @param {number} index The current array index
+     * @param {string} result The result of html options as string
+     * @returns {string}
+     */
+    const toOptions = (array, index = 0, result = "") => {
+        if (!Array.isArray(array)) return ""
+        if (index > array.length - 1) return result
+        return () => toOptions(array, index + 1, result + `<option>${array[index]}</option>`)
+    }
+
+    /**
+     * Returns the options elements as string
+     */
+    const createOptions = trampoline(toOptions)
+
+    /**
+     * Creates the loading page
+     */
+    const loadingPage = () => renderHTML(`<div>Loading...</div>`)
+
+    /**
+     * Creates the authentication failed page
+     */
+    const authenticationFailedPaige = () => renderHTML(`<div>Authentication failed! Incorrect login and/or password used!</div>`)
+
+    /**
+     * Creates something went wrong page
+     */
+    const somethingWentWrongPage = () => renderHTML(`<div>Something went wrong! Internet connection was lost or something error occors in the communications with server!</div>`)
 
     /**
      * Creates the login page
      */
     const loginPage = () => {
         const html = `
-            <header><h1>H2</h1></header>
             <form onsubmit="this.dispatchEvent(new CustomEvent('login', {bubbles: true, cancelable: true}))">
                 <div> 
                     <label>Login:
@@ -223,14 +255,66 @@
                         const formData = new FormData(e.target)
                         const login = formData.get("login")
                         const password = formData.get("password")
-                        renderHTML(buildLoadingPage())
-                        await authenticate(login, password) ? selectDevicePage() :
+                        loadingPage()
+                        await authenticate(login, password) ? initialPage() :
                             (() => {
-                                renderHTML(buildAuthenticationFailedPaige())
+                                authenticationFailedPaige()
                                 setTimeout(loginPage, 2000)
                             })()
                     }
                 },
+            ]
+        )
+    }
+
+    const controlDevicePage = () => {
+
+    }
+
+    const accessDataPage = () => {
+        
+    }
+
+    const initialPage = () => {
+        const html = `
+            <form>
+                <div>
+                    <label>
+                        Select the device:
+                        <select name="device">${options}</select>
+                    </label>
+                </div>
+                <div>
+                    <button onclick="this.dispatchEvent(new CustomEvent('control-device', {bubbles: true, cancelable: true}))"> Control device</button>
+                    <button onclick="this.dispatchEvent(new CustomEvent('access-data', {bubbles: true, cancelable: true}))"> Access data</button>
+                </div>
+            </form>
+        `
+        renderHTML(html)
+        attachEvents(
+            [
+                {
+                    event: "submit", callback: (e) =>
+                        e.preventDefault()
+                },
+                {
+                    event: "control-device", callback: async (e) => {
+                        e.preventDefault()
+                        const deviceName = document.querySelector('name="device').value
+                        loadingPage()
+                        setDeviceName(deviceName)
+                        await controlDevicePage()
+                    }
+                },
+                {
+                    event: "access-data", callback: async (e) => {
+                        e.preventDefault()
+                        const deviceName = document.querySelector('name="device').value
+                        loadingPage()
+                        setDeviceName(deviceName)
+                        await accessDataPage()
+                    }
+                }
             ]
         )
     }
