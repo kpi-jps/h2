@@ -165,6 +165,20 @@
     )
 
     /**
+     * Sets the device name in session storage
+     * @param {string} device The device name
+     * @returns {string}
+     */
+    const setDevice = (device) => device && typeof device === "string" ?
+        sessionStorage.setItem("device", device) : sessionStorage.setItem("device", "")
+
+    /**
+     * Gets the device name from session storage
+     * @returns {string}
+     */
+    const getDevice = () => sessionStorage.getItem("device") ? sessionStorage.getItem("device") : ""
+
+    /**
      * Renders the html ui
      * @param {string} htmlAsString The html elements as string
      */
