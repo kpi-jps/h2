@@ -1,0 +1,67 @@
+body,
+button,
+input {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 1.05rem;
+}
+
+input,
+select {
+    width: 95%;
+    margin: 5px auto;
+    padding: 8px;
+    color: lightseagreen;
+    border: 2px solid black;
+    border-radius: 4px;
+}
+
+a {
+    text-decoration: none;
+    margin-right: 5px;
+}
+
+header {
+    font-size: 1.5rem;
+    text-align: center;
+} 
+main {
+    width: 600px;
+    margin: 5px auto;
+    border: 2px solid gray;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+form > div {
+    padding: 5px 0;
+    margin: 5px 0;
+}
+
+button,
+input[type=submit],
+a {
+    width: 180px;
+    padding: 10px;
+    border: 3px solid black;
+    border-radius: 5px;
+    background-color: black;
+    color: rgb(249, 248, 248);
+    font-weight: bold;
+}
+
+button:hover,
+a:hover,
+input[type=submit]:hover {
+    background-color: rgb(249, 248, 248);
+    color: black;
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    body {
+        width: 85%;
+    }
+}
