@@ -1,6 +1,7 @@
 body,
 button,
-input {
+input,
+select {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 1.05rem;
 }
@@ -23,7 +24,8 @@ a {
 header {
     font-size: 1.5rem;
     text-align: center;
-} 
+}
+
 main {
     width: 600px;
     margin: 5px auto;
@@ -32,7 +34,7 @@ main {
     padding: 20px;
 }
 
-form > div {
+form>div {
     padding: 5px 0;
     margin: 5px 0;
 }
@@ -61,8 +63,18 @@ input[type=submit]:hover {
 }
 
 @media (max-width: 800px) {
-    body, main {
+
+    body,
+    main {
         width: 90%;
         margin: 10px auto;
+        font-size: 0.85rem;
+    }
+
+    button,
+    input[type=submit],
+    a {
+        width: 150px;
+        font-size: 0.85rem;
     }
 }
