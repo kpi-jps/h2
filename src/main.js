@@ -290,11 +290,11 @@
     const checkingDeviceStatus = async (timer, timeoutId = null, start = true) => {
         if (timeoutId) {
             clearTimeout(timeoutId)
-            console.log(timeoutId)
         }
         if (start) {
             const sendPath = `/${getDeviceName()}/status/connected.json?auth=${getAuthState().token}`
-            if (await !sendTXT(sendPath, "false")) return somethingWentWrongPage()
+            const check = await sendTXT(sendPath, "false")
+            if (await !check) return somethingWentWrongPage()
         }
         if (timer % 5000 === 0) {
             const pathToStatus = `/${getDeviceName()}/status.json?auth=${getAuthState().token}`
@@ -316,10 +316,9 @@
         const statusJson = await getJSON(pathToStatus)
         const status = JSON.parse(statusJson)
         const html = `
-        <div> 
-            The device <b>${getDeviceName()}</b> ${status.connected ? "is" : "isn't"} <b>connected</b>  
-            ${status.connected && status.running ? "and <b>running</b>" : status.connected && !status.running ? "and <b>not running</b>" : ""} 
-        </div>
+        <div> The device <b>${getDeviceName()}</b> ${status.connected ? "is" : "isn't"} <b>connected</b>  
+            ${status.connected && status.running ? "and <b>running</b>" : status.connected && !status.running ? 
+                "and <b>not running</b>" : ""} </div>
          <form>
             <div>
                 <button onclick="this.dispatchEvent(new CustomEvent('reload-page', {bubbles: true, cancelable: true}))">Back</button>
@@ -347,7 +346,8 @@
                         e.preventDefault()
                         loadingPage()
                         const sendPath = `/${getDeviceName()}/status/running.json?auth=${getAuthState().token}`
-                        if (await !sendTXT(sendPath, "false")) return somethingWentWrongPage()
+                        const check = await sendTXT(sendPath, "true")
+                        if (!check) return somethingWentWrongPage()
                         await checkingDeviceStatus(150000)
                     }
                 },
@@ -356,24 +356,24 @@
                         e.preventDefault()
                         loadingPage()
                         const sendPath = `/${getDeviceName()}/status/running.json?auth=${getAuthState().token}`
-                        if (await !sendTXT(sendPath, "true")) return somethingWentWrongPage()
+                        const check = await sendTXT(sendPath, "true")
+                        if (!check) return somethingWentWrongPage()
                         await checkingDeviceStatus(150000)
                     }
                 }
             ]
         )
     }
-    /*
-    const controlDevicePage = async () => {
-        const pathToStatus = `/${getDeviceName()}/status.json?auth=${getAuthState().token}`
-        const statusJson = await getJSON(pathToStatus)
-        const html = (options, connected, running) => `
-        <div> The device <b>${getDeviceName()}</b> ${connected ? "is" : "isn't"} <b>connected</b>  ${connected && running ? "and <b>running</b>" : connected && !running ? "and <b>not running</b>" : ""} </div>
-         <form onsubmit="this.dispatchEvent(new CustomEvent('view-data', {bubbles: true, cancelable: true}))">
-            <div>
-                <button onclick="this.dispatchEvent(new CustomEvent('back-to-select-device', {bubbles: true, cancelable: true}))">Back</button>
-                <button class="${connected ? "" : "hidden"}" onclick="this.dispatchEvent(new CustomEvent('${running ? "stop-run" : "start-run"}', {bubbles: true, cancelable: true}))">${running ? "Stop" : "Start"} run</button>
-            </div>
+
+
+    const selectDataPage = async () => {
+        const pathToList = `/${getDeviceName()}/runs.json?auth=${getAuthState().token}&shallow=true`
+        const dataListJson = await getJSON(pathToList)
+        if (dataListJson === "") return somethingWentWrongPage()
+        const dataList = Object.keys(JSON.parse(dataListJson))
+        const options = createOptions(dataList)
+        const html = `
+         <form>
             <div>
                 <label>
                     Select data to view:
@@ -381,14 +381,32 @@
                 </label>
             </div>
             <div>
-                <input type="submit" value="View data">
+                <button onclick="this.dispatchEvent(new CustomEvent('reload-page', {bubbles: true, cancelable: true}))">Back</button>
+                <button onclick="this.dispatchEvent(new CustomEvent('view-data', {bubbles: true, cancelable: true}))">View data</button>
             </div>
         </form >
         `
-    }
-        */
-
-    const accessDataPage = () => {
+        renderHTML(html)
+        attachEvents(
+            [
+                {
+                    event: "submit", callback: (e) =>
+                        e.preventDefault()
+                },
+                {
+                    event: "reload-page", callback: async (e) => {
+                        e.preventDefault()
+                        window.location.reload()
+                    }
+                },
+                {
+                    event: "view-data", callback: async (e) => {
+                        e.preventDefault()
+                       
+                    }
+                }
+            ]
+        )
 
     }
 
@@ -437,7 +455,7 @@
                         const deviceName = document.querySelector("#device").value
                         loadingPage()
                         setDeviceName(deviceName)
-                        await accessDataPage()
+                        await selectDataPage()
                     }
                 }
             ]
