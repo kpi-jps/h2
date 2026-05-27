@@ -207,39 +207,39 @@
      */
     const getDataName = () => sessionStorage.getItem("dataName") ? sessionStorage.getItem("dataName") : ""
 
-     /**
-     * Sets the current threshold in session storage
-     * @param {string} threshold The threshold 
-     * @returns {string}
-     */
+    /**
+    * Sets the current threshold in session storage
+    * @param {string} threshold The threshold 
+    * @returns {string}
+    */
     const setThreshold = (threshold) => threshold && typeof threshold === "string" ?
-        sessionStorage.setItem("threshold", threshold) : sessionStorage.setItem("threshold", "")
+        sessionStorage.setItem("threshold", threshold) : sessionStorage.setItem("threshold", "3200")
 
     /**
      * 
      * @returns {string}
      */
-    const getMaxTime = () => sessionStorage.getItem("maxTime") ? sessionStorage.getItem("maxTime") : ""
+    const getMaxTime = () => sessionStorage.getItem("maxTime") ? sessionStorage.getItem("maxTime") : "50"
 
-     /**
-     * Sets the current maxTime in session storage
-     * @param {string} maxTime The maxTime 
-     * @returns {string}
-     */
+    /**
+    * Sets the current maxTime in session storage
+    * @param {string} maxTime The maxTime 
+    * @returns {string}
+    */
     const setMaxTime = (maxTime) => maxTime && typeof maxTime === "string" ?
         sessionStorage.setItem("maxTime", maxTime) : sessionStorage.setItem("maxTime", "")
 
-     /**
-     * 
-     * @returns {string}
-     */
-    const getMinTime = () => sessionStorage.getItem("minTime") ? sessionStorage.getItem("minTime") : ""
+    /**
+    * 
+    * @returns {string}
+    */
+    const getMinTime = () => sessionStorage.getItem("minTime") ? sessionStorage.getItem("minTime") : "0"
 
-     /**
-     * Sets the current maxTime in session storage
-     * @param {string} maxTime The maxTime 
-     * @returns {string}
-     */
+    /**
+    * Sets the current maxTime in session storage
+    * @param {string} maxTime The maxTime 
+    * @returns {string}
+    */
     const setMinTime = (minTime) => minTime && typeof minTime === "string" ?
         sessionStorage.setItem("minTime", minTime) : sessionStorage.setItem("minTime", "")
 
@@ -249,7 +249,7 @@
      */
     const getThreshold = () => sessionStorage.getItem("threshold") ? sessionStorage.getItem("threshold") : ""
 
-   
+
     /**
      * Renders the html ui
      * @param {string} htmlAsString The html elements as string
@@ -462,8 +462,10 @@
         attachEvents(
             [
                 {
-                    event: "submit", callback: (e) =>
+                    event: "submit", callback: async (e) => {
                         e.preventDefault()
+
+                    }
                 },
                 {
                     event: "reload-page", callback: async (e) => {
@@ -481,16 +483,24 @@
                         if (arrayOfH2Data === null) return somethingWentWrongPage()
                         vizualizeDataPage(arrayOfH2Data)
                         attachEvents([
-                            { 
+                            {
+                                event: "back", callback: (e) => {
+                                    e.preventDefault()
+                                    loadingPage()
+                                    selectDataPage()
+                                }
+                            },
+                            {
                                 event: "change-threshold", callback: (e) => {
                                     e.preventDefault()
+                                    console.log(e.target.value)
                                     setThreshold(e.target.value)
                                     loadingPage()
                                     vizualizeDataPage(arrayOfH2Data)
 
                                 }
                             },
-                            { 
+                            {
                                 event: "change-max-time", callback: (e) => {
                                     e.preventDefault()
                                     setMaxTime(e.target.value)
@@ -498,7 +508,7 @@
                                     vizualizeDataPage(arrayOfH2Data)
                                 }
                             },
-                            { 
+                            {
                                 event: "change-min-time", callback: (e) => {
                                     e.preventDefault()
                                     setMinTime(e.target.value)
@@ -537,16 +547,18 @@
      */
     const prepareH2Data = (data, threshold, maxTime = Infinity, minTime = 0, index = 0, result = { x: [], y: [], d: [], p: [], pulses: 0 }) => {
         if (index >= data.length) return result
-        if (index > 0) {
-            const prev = data[index - 1].millivolts > threshold ? 1 : 0
-            const current = data[index].millivolts > threshold ? 1 : 0
-            if (prev === 1 && current === 0) result.pulses = result.pulses + 1
-        }
-        result.x = result.x.concat(data[index].milliseconds / 3600000)
-        result.y = result.y.concat(data[index].millivolts)
-        result.d = result.d.concat(data[index].millivolts >= threshold ? 1 : 0)
-        result.p = result.p.concat(result.pulses)
 
+        if (data[index].milliseconds / 3600000 >= minTime && data[index].milliseconds / 3600000 <= maxTime) {
+            if (index > 0) {
+                const prev = data[index - 1].millivolts > threshold ? 1 : 0
+                const current = data[index].millivolts > threshold ? 1 : 0
+                if (prev === 1 && current === 0) result.pulses = result.pulses + 1
+            }
+            result.x = result.x.concat(data[index].milliseconds / 3600000)
+            result.y = result.y.concat(data[index].millivolts)
+            result.d = result.d.concat(data[index].millivolts >= threshold ? 1 : 0)
+            result.p = result.p.concat(result.pulses)
+        }
         return () => prepareH2Data(data, threshold, maxTime, minTime, index + 1, result)
     }
 
@@ -569,17 +581,18 @@
         /**
          * @type {preparedData}
          */
-        const preparedData = prepareData(arrayOfH2Data, 
-            getThreshold() ? Number(getThreshold()) : 3200, 
-            getMaxTime() ? Number(getMaxTime()) : Infinity,
-            getMinTime() ? Number(getMinTime()) : 0
-        )
+        const preparedData = prepareData(arrayOfH2Data, Number(getThreshold()), Number(getMaxTime()), Number(getMinTime()))
         console.log(preparedData)
         const dataXY1 = [
             {
                 x: preparedData.x,
                 y: preparedData.y,
                 color: "black",
+                fill: true
+            }, {
+                x:[0, Number(getMaxTime())],
+                y:[Number(getThreshold()), Number(getThreshold())],
+                color: "red",
                 fill: true
             }]
         const dataXY2 = [
@@ -604,7 +617,7 @@
                 yLabel: "Raw signal / mV",
                 yMax: 3350,//preparedData.y2[preparedData.y2.length - 1],
                 yMin: 2800,//preparedData.y2[0],
-                xMin: -0.5,
+                xMin: 0,
                 xMax: preparedData.x[preparedData.x.length - 1] * 1.01,
                 xDecimalPlaces: 0,
                 yDecimalPlaces: 0,
@@ -619,9 +632,9 @@
                 fontSize: 15,
                 xLabel: "t / h",
                 yLabel: "Digital signal",
-                yMax: 1.01,//preparedData.y2[preparedData.y2.length - 1],
-                yMin: -0.01,//preparedData.y2[0],
-                xMin: -0.5,
+                yMax: 1.001,//preparedData.y2[preparedData.y2.length - 1],
+                yMin: -0.001,//preparedData.y2[0],
+                xMin: 0,
                 xMax: preparedData.x[preparedData.x.length - 1] * 1.01,
                 xDecimalPlaces: 0,
                 yDecimalPlaces: 0,
@@ -636,7 +649,7 @@
                 fontSize: 15,
                 xLabel: "t / h",
                 yLabel: "Pulses",
-                xMin: -2,
+                xMin: 0,
                 xMax: preparedData.x[preparedData.x.length - 1],
                 yMax: preparedData.p[preparedData.x.length - 1] * 1.02,
                 yMin: -1,
@@ -652,24 +665,24 @@
         const graph2 = serializer.serializeToString(g2)
         const graph3 = serializer.serializeToString(g3)
         const html = `
+        <div>
+            <button onclick="this.dispatchEvent(new CustomEvent('back', {bubbles: true, cancelable: true}))">Back</button>
+        </div>
         <div>Data: <b>${getDataName()}</b> </div>
         <div>Signal pulses: <b>${preparedData.pulses.toString()}</b> </div>
         <form>
             <div>
-                <button onclick="this.dispatchEvent(new CustomEvent('back', {bubbles: true, cancelable: true}))">Back</button>
-            </div>
-            <div>
-                <label>Signal threshold: 
+                <label>Signal threshold / mV: 
                     <input type="text" id="threshold" value="${getThreshold()}" onchange="this.dispatchEvent(new CustomEvent('change-threshold', {bubbles: true, cancelable: true}))"> 
                 </label>
             </div> 
              <div>
-                <label> Max time: 
+                <label> Max time / h: 
                     <input type="text" id="max-time" value="${getMaxTime()}" onchange="this.dispatchEvent(new CustomEvent('change-max-time', {bubbles: true, cancelable: true}))"> 
                 </label>
             </div>
              <div>
-                <label>Min time: 
+                <label>Min time / h: 
                     <input type="text" id="min-time" value="${getMinTime()}" onchange="this.dispatchEvent(new CustomEvent('change-min-time', {bubbles: true, cancelable: true}))"> 
                 </label>
             </div>
@@ -685,9 +698,9 @@
         </div>
    `
         renderHTML(html)
-        InputMasks.decimal("threshold")
-        InputMasks.decimal("max-time")
-        InputMasks.decimal("min-time")
+        InputMasks.decimal.apply("threshold")
+        InputMasks.decimal.apply("max-time")
+        InputMasks.decimal.apply("min-time")
     }
 
 
