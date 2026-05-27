@@ -227,7 +227,7 @@
     * @returns {string}
     */
     const setMaxTime = (maxTime) => maxTime && typeof maxTime === "string" ?
-        sessionStorage.setItem("maxTime", maxTime) : sessionStorage.setItem("maxTime", "")
+        sessionStorage.setItem("maxTime", maxTime) : sessionStorage.setItem("maxTime", "50")
 
     /**
     * 
@@ -241,13 +241,13 @@
     * @returns {string}
     */
     const setMinTime = (minTime) => minTime && typeof minTime === "string" ?
-        sessionStorage.setItem("minTime", minTime) : sessionStorage.setItem("minTime", "")
+        sessionStorage.setItem("minTime", minTime) : sessionStorage.setItem("minTime", "0")
 
     /**
      * 
      * @returns {string}
      */
-    const getThreshold = () => sessionStorage.getItem("threshold") ? sessionStorage.getItem("threshold") : ""
+    const getThreshold = () => sessionStorage.getItem("threshold") ? sessionStorage.getItem("threshold") : "3200"
 
 
     /**
