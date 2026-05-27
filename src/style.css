@@ -6,6 +6,9 @@ select {
     font-size: 1.05rem;
 }
 
+h3 {
+    text-align: center;
+}
 input,
 select {
     width: 95%;
@@ -76,5 +79,6 @@ input[type=submit]:hover {
     a {
         width: 150px;
         font-size: 0.85rem;
+        margin: 10px;
     }
 }

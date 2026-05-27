@@ -157,6 +157,21 @@
     }
 
     /**
+     * 
+     * @param {any []} array 
+     * @param {any []} result 
+     * @returns {any []}
+     */
+    const flattenRecursive = (array, result = []) => {
+        if (array.length === 0) return result
+        const [first, ...rest] = array
+        return () => {
+            if (Array.isArray(first)) return flattenRecursive([...first, ...rest], result);
+            return flattenRecursive(rest, [...result, first]);
+        }
+    }
+
+    /**
      * Attaches events to html elements
      * @param {EventAndCallback []} eventsAndCallbacks An array of eventAndCallbacks objects
      */
@@ -178,6 +193,63 @@
      */
     const getDeviceName = () => sessionStorage.getItem("device") ? sessionStorage.getItem("device") : ""
 
+    /**
+     * Sets the current data name in session storage
+     * @param {string} dataName The device name
+     * @returns {string}
+     */
+    const setDataName = (dataName) => dataName && typeof dataName === "string" ?
+        sessionStorage.setItem("dataName", dataName) : sessionStorage.setItem("dataName", "")
+
+    /**
+     * Gets the current data name from session storage
+     * @returns {string}
+     */
+    const getDataName = () => sessionStorage.getItem("dataName") ? sessionStorage.getItem("dataName") : ""
+
+     /**
+     * Sets the current threshold in session storage
+     * @param {string} threshold The threshold 
+     * @returns {string}
+     */
+    const setThreshold = (threshold) => threshold && typeof threshold === "string" ?
+        sessionStorage.setItem("threshold", threshold) : sessionStorage.setItem("threshold", "")
+
+    /**
+     * 
+     * @returns {string}
+     */
+    const getMaxTime = () => sessionStorage.getItem("maxTime") ? sessionStorage.getItem("maxTime") : ""
+
+     /**
+     * Sets the current maxTime in session storage
+     * @param {string} maxTime The maxTime 
+     * @returns {string}
+     */
+    const setMaxTime = (maxTime) => maxTime && typeof maxTime === "string" ?
+        sessionStorage.setItem("maxTime", maxTime) : sessionStorage.setItem("maxTime", "")
+
+     /**
+     * 
+     * @returns {string}
+     */
+    const getMinTime = () => sessionStorage.getItem("minTime") ? sessionStorage.getItem("minTime") : ""
+
+     /**
+     * Sets the current maxTime in session storage
+     * @param {string} maxTime The maxTime 
+     * @returns {string}
+     */
+    const setMinTime = (minTime) => minTime && typeof minTime === "string" ?
+        sessionStorage.setItem("minTime", minTime) : sessionStorage.setItem("minTime", "")
+
+    /**
+     * 
+     * @returns {string}
+     */
+    const getThreshold = () => sessionStorage.getItem("threshold") ? sessionStorage.getItem("threshold") : ""
+
+   
     /**
      * Renders the html ui
      * @param {string} htmlAsString The html elements as string
@@ -317,7 +389,7 @@
         const status = JSON.parse(statusJson)
         const html = `
         <div> The device <b>${getDeviceName()}</b> ${status.connected ? "is" : "isn't"} <b>connected</b>  
-            ${status.connected && status.running ? "and <b>running</b>" : status.connected && !status.running ? 
+            ${status.connected && status.running ? "and <b>running</b>" : status.connected && !status.running ?
                 "and <b>not running</b>" : ""} </div>
          <form>
             <div>
@@ -377,7 +449,7 @@
             <div>
                 <label>
                     Select data to view:
-                    <select name="data">${options}</select>
+                    <select name="data" id="data" >${options}</select>
                 </label>
             </div>
             <div>
@@ -402,13 +474,222 @@
                 {
                     event: "view-data", callback: async (e) => {
                         e.preventDefault()
-                       
+                        const dataName = document.querySelector("#data").value
+                        loadingPage()
+                        setDataName(dataName)
+                        const arrayOfH2Data = await handleData()
+                        if (arrayOfH2Data === null) return somethingWentWrongPage()
+                        vizualizeDataPage(arrayOfH2Data)
+                        attachEvents([
+                            { 
+                                event: "change-threshold", callback: (e) => {
+                                    e.preventDefault()
+                                    setThreshold(e.target.value)
+                                    loadingPage()
+                                    vizualizeDataPage(arrayOfH2Data)
+
+                                }
+                            },
+                            { 
+                                event: "change-max-time", callback: (e) => {
+                                    e.preventDefault()
+                                    setMaxTime(e.target.value)
+                                    loadingPage()
+                                    vizualizeDataPage(arrayOfH2Data)
+                                }
+                            },
+                            { 
+                                event: "change-min-time", callback: (e) => {
+                                    e.preventDefault()
+                                    setMinTime(e.target.value)
+                                    loadingPage()
+                                    vizualizeDataPage(arrayOfH2Data)
+                                }
+                            }
+                        ])
                     }
                 }
             ]
         )
 
     }
+
+    /**
+     * @typedef {Object} dataH2
+     * @property {number} milliseconds
+     * @property {number} millivolts
+     */
+
+    /**
+    * @typedef {Object} preparedData
+    * @property {number[]} x
+    * @property {number []} y
+    * @property {number []} d
+    * @property {number []} p
+    * @property {number} pulses
+    */
+    /**
+     * 
+     * @param {dataH2 []} data 
+     * @param {*} index 
+     * @param {*} result 
+     * @returns {preparedData}
+     */
+    const prepareH2Data = (data, threshold, maxTime = Infinity, minTime = 0, index = 0, result = { x: [], y: [], d: [], p: [], pulses: 0 }) => {
+        if (index >= data.length) return result
+        if (index > 0) {
+            const prev = data[index - 1].millivolts > threshold ? 1 : 0
+            const current = data[index].millivolts > threshold ? 1 : 0
+            if (prev === 1 && current === 0) result.pulses = result.pulses + 1
+        }
+        result.x = result.x.concat(data[index].milliseconds / 3600000)
+        result.y = result.y.concat(data[index].millivolts)
+        result.d = result.d.concat(data[index].millivolts >= threshold ? 1 : 0)
+        result.p = result.p.concat(result.pulses)
+
+        return () => prepareH2Data(data, threshold, maxTime, minTime, index + 1, result)
+    }
+
+    /**
+     * 
+     * @returns {dataH2 []}
+     */
+    const handleData = async () => {
+        const dataPath = `/${getDeviceName()}/runs/${getDataName()}.json?auth=${getAuthState().token}`
+        const dataJSON = await getJSON(dataPath)
+        if (dataJSON === "") return null
+        const data = JSON.parse(dataJSON)
+        const flattingData = trampoline(flattenRecursive)
+        const flatData = flattingData(data)
+        return flatData
+    }
+
+    const vizualizeDataPage = (arrayOfH2Data) => {
+        const prepareData = trampoline(prepareH2Data)
+        /**
+         * @type {preparedData}
+         */
+        const preparedData = prepareData(arrayOfH2Data, 
+            getThreshold() ? Number(getThreshold()) : 3200, 
+            getMaxTime() ? Number(getMaxTime()) : Infinity,
+            getMinTime() ? Number(getMinTime()) : 0
+        )
+        console.log(preparedData)
+        const dataXY1 = [
+            {
+                x: preparedData.x,
+                y: preparedData.y,
+                color: "black",
+                fill: true
+            }]
+        const dataXY2 = [
+            {
+                x: preparedData.x,
+                y: preparedData.d,
+                color: "red",
+                fill: true
+            }]
+        const dataXY3 = [
+            {
+                x: preparedData.x,
+                y: preparedData.p,
+                color: "blue",
+                fill: true
+            }]
+        const g1 = plot.newSVGLinePlot(
+            {
+                font: "Verdana",
+                fontSize: 15,
+                xLabel: "t / h",
+                yLabel: "Raw signal / mV",
+                yMax: 3350,//preparedData.y2[preparedData.y2.length - 1],
+                yMin: 2800,//preparedData.y2[0],
+                xMin: -0.5,
+                xMax: preparedData.x[preparedData.x.length - 1] * 1.01,
+                xDecimalPlaces: 0,
+                yDecimalPlaces: 0,
+                graphAxisMarksInterval: 3,
+                grid: false
+            },
+            dataXY1,
+            null).getSVG()
+        const g2 = plot.newSVGLinePlot(
+            {
+                font: "Verdana",
+                fontSize: 15,
+                xLabel: "t / h",
+                yLabel: "Digital signal",
+                yMax: 1.01,//preparedData.y2[preparedData.y2.length - 1],
+                yMin: -0.01,//preparedData.y2[0],
+                xMin: -0.5,
+                xMax: preparedData.x[preparedData.x.length - 1] * 1.01,
+                xDecimalPlaces: 0,
+                yDecimalPlaces: 0,
+                graphAxisMarksInterval: 1,
+                grid: false
+            },
+            dataXY2,
+            null).getSVG()
+        const g3 = plot.newSVGLinePlot(
+            {
+                font: "Verdana",
+                fontSize: 15,
+                xLabel: "t / h",
+                yLabel: "Pulses",
+                xMin: -2,
+                xMax: preparedData.x[preparedData.x.length - 1],
+                yMax: preparedData.p[preparedData.x.length - 1] * 1.02,
+                yMin: -1,
+                xDecimalPlaces: 0,
+                yDecimalPlaces: 0,
+                graphAxisMarksInterval: 4,
+                grid: false
+            },
+            dataXY3,
+            null).getSVG()
+        const serializer = new XMLSerializer();
+        const graph1 = serializer.serializeToString(g1)
+        const graph2 = serializer.serializeToString(g2)
+        const graph3 = serializer.serializeToString(g3)
+        const html = `
+        <div>Data: <b>${getDataName()}</b> </div>
+        <div>Signal pulses: <b>${preparedData.pulses.toString()}</b> </div>
+        <form>
+            <div>
+                <button onclick="this.dispatchEvent(new CustomEvent('back', {bubbles: true, cancelable: true}))">Back</button>
+            </div>
+            <div>
+                <label>Signal threshold: 
+                    <input type="text" id="threshold" value="${getThreshold()}" onchange="this.dispatchEvent(new CustomEvent('change-threshold', {bubbles: true, cancelable: true}))"> 
+                </label>
+            </div> 
+             <div>
+                <label> Max time: 
+                    <input type="text" id="max-time" value="${getMaxTime()}" onchange="this.dispatchEvent(new CustomEvent('change-max-time', {bubbles: true, cancelable: true}))"> 
+                </label>
+            </div>
+             <div>
+                <label>Min time: 
+                    <input type="text" id="min-time" value="${getMinTime()}" onchange="this.dispatchEvent(new CustomEvent('change-min-time', {bubbles: true, cancelable: true}))"> 
+                </label>
+            </div>
+        </form>
+        <div>
+            <div>${graph1}</div>
+        </div>
+         <div>
+            <div>${graph2}</div>
+        </div>
+        <div>
+            <div>${graph3}</div>
+        </div>
+   `
+        renderHTML(html)
+        InputMasks.decimal("threshold")
+        InputMasks.decimal("max-time")
+        InputMasks.decimal("min-time")
+    }
+
 
     /**
      * Creates the initial page
