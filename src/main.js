@@ -418,7 +418,7 @@
                         e.preventDefault()
                         loadingPage()
                         const sendPath = `/${getDeviceName()}/status/running.json?auth=${getAuthState().token}`
-                        const check = await sendTXT(sendPath, "true")
+                        const check = await sendTXT(sendPath, "false")
                         if (!check) return somethingWentWrongPage()
                         await checkingDeviceStatus(150000)
                     }
